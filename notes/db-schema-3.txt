@@ -1,0 +1,239 @@
+User
+first_name
+last_name
+middle_name
+date_of_birth
+email_address
+gender
+picture
+location
+
+about
+
+
+verification_details
+
+phone_number
+
+profile_status
+
+active
+
+profile_verification
+
+means_of_identification
+
+profile_verification_document
+
+means_of_identification
+
+
+user_profile
+
+has_children
+lives_with_family
+hobbies
+ethnicity
+values
+height
+profession
+education
+interest
+speaks
+marital_status
+drinks
+smokes
+can_relocate
+
+
+
+working_experience
+
+education
+
+languages
+
+
+
+hometown
+
+
+
+gender
+id
+label
+
+
+friendship
+id
+person1
+person2
+
+
+
+friend_request
+id
+person1
+person2
+
+
+
+
+A while ago, I did one, but instead made a like a single object, with the attributes: a primary key, the foreign key for the object liked, a foreign key for the user that liked it, and a date storing when the like was performed. This seemed the most scalable. That way, you could also add an attribute that instead had a 1-5 rating, storing more advanced properties as well.
+
+
+
+
+One way would be like this:
+
+On your DB’s “posts” table, you’d want either something like a “is_liked” column on that table that functions as a flag or a “number_of_likes” column that tracks how many users have “liked” the post.
+
+To track each “like”, a “liked_posts” table of some sort that has post_id, user_id, and a timestamp can do this. Each time a user “likes” a post, a record gets added with those values and if they “unlike” something, the record gets deleted
+
+This way, the application can show a user some indication that they’ve “liked” a post, show the poster or others the users who clicked “like” and provides a simple way to track and update the behavior. If you’re aggregating the number of “likes” on the posts table, you can have a process that updates that value on a schedule rather than each time the count changes. The application can query the aggregated value on the posts table to show the number of “likes” a post has. As long as this value is updated regularly, it shouldn’t diverge too much from the actual number of “likes”
+
+What you absolutely don’t want to do is try to have a single table to track all of this information
+
+
+
+As others already said, because posts and comments can get multiple likes they will need to be in a separate table. But should it be one or two tables?
+
+Let's first look at the posts and comments themselves. How should they be stored? There are two options and neither is necessarily wrong. They depend on functionality choices.
+
+Consider posts and comments to be separate entities with separate functionality. This results in two tables. One for posts. The other for comments. Based on the functionality I as a user see I suspect this is how Quora stores its information (or to be more precise, I suspect Quora stores questions, answers, and comments in three separate tables)
+Consider posts and comments to be mostly the same — all are just user-contributed content. The only difference is that some content is in response to other content. This results in a single table for both posts and comments. The database design of StackOverflow is publicly available and they use this choice.
+In the second case, it is write obvious that all likes of both posts and comments are in fact just likes of content so they go in a single table.
+
+In the first case, likes of posts and likes of comments are different. You need two tables. One that links users and posts. Another one that links users and comments. It is in theory possible to create a single table that links users to either posts or comments but that would be a nightmare to work with and I would insist on a REALLY good explanation if a coworker would propose that version.
+
+4.3K views
+View 5 upvotes
+Answer requested by 
+Luke Fisk-Lennon
+
+
+
+Not seeing the full design of the tables, I’ll have to make some guesses.
+
+Let’s assume we have a person. A person can make a post, which is one thing, and a person can make a comment on a post, which is another thing. So, we have three distinct entities so far, people, posts, comments. Now we toss in likes. A person can mark a post or a comment with a like. More than one person can like more than one post or comment. With that kind of relationship, I would assume a many-to-many connection, likes to posts and likes to comments. Probably the best way to do that is with an interim table, connecting the like to the person and a post, and then another table connecting the like to the person and the comment.
+
+That would also allow for types of likes (dislikes, etc.).
+
+Yeah, I’d put them in separate tables.
+
+Asked to Answer.
+
+
+
+1
+
+
+I would recommend using separate tables because you may not need all that information at one time. You could do it either way but I think of it as do you need all of the data at once.
+
+Table 1 (User Auth)
+
+This table would hold only information for log-in and have three columns (user_name, hashed_password, UID)
+
+So your query would select UID where user_name and hashed_password matched. I would also recommend never storing a readable password in a database table because that can become a security issue.
+
+Table 2 (Basic Information)
+
+This table would hold the least amount of information that you would get at signup to make a basic profile. The fields would consist of UID, name, DOB, zip, link_to_profile_photo, email and whatever basic information you would like. email is kind of special because if you require the user_name to be an email address there is no reason to have it twice.
+
+Table 3 (Extended Information)
+
+This table would hold any optional information that the user could enter like phone_number, bio or address assigned by UID.
+
+Then after that you can add as many other tables that you would like. One for Post, one for comments, ect.
+
+An Example of a Post table would be like:
+
+post_id, UID, the_post, date_of_post, likes, ect.
+
+Then for Comments
+
+comment_id, for_post_id, UID, the_comment, date_of_comment, likes, ect.
+
+Breaking it down in to small sections would be more efficient in the long run.
+
+
+
+Friend request and list, database schema
+Hi.
+
+How would you think that is the best schema of friend request? I have "issues" on showing the list of a user because this is my schema:
+
+Copy Code
+id
+user_id_1
+user_id_2
+confirmed (boolean)
+So if I want to show a user's friend request, I have to do a select using both user_ids and then check in a loop, if the "current user" is user_id_1 or user_id_2... Is there a better way?
+
+
+
+The best way would be to have 2 tables, let's call one users and one friends. users has the user id (and other relevant data) friends has two columns: user1 and user2 which are user ids. so for example if user # 23 is a friend of user # 54 the friends table will have a row with 23 and 54. This table is basically a self-junction on the users table.
+
+You can always get a Managed MySQL VPS from us and our fully-managed support will help you with problems related to MySQL or will explain how to show all users in the MySQL database. PS. If you liked this post on Listing all Users in MySQL , please share it with your friends via social media networks by using our share shortcuts
+
+
+
+
+MySQL social network schema
+Social Network System Database The Social Network System Database Design in MySQL to manage the Users, Friends, Follower, Messages, and Groups.
+
+sonSQL is a MySQL variant that aims to be the default database system for social network data. It uses a conceptual schema called sonSchema to translate a social network design into logical tables. This paper introduces sonSchema, shows how it can be instantiated, and illustrates social network analysis for sonSchema datasets.
+
+Facebook style friend request system database Design
+Database Design To build the friend request system, you have to create three tables such as Users, Updates and Friends.
+
+Inserting a new Friend request. Friend request sent by user 1 to user 2. Once a record is inserted in the relationship table, a friend request or a relationship has been established between the two users. You can use the status and action_user_id to display the appropriate options and to block the user.
+
+to accept the request: add new row to friend_xref and set resolved to 1 in the friend_request table; to deny the request: add new row to fan_xref and set resolved to 1 in the friend_request table; But it would be better to ask this under mysql, database-design or some similar tag to get best answers.
+
+How to store friendship in database
+The most proper way to do this would be to have the table of Members (obviously), and a second table of Friend relationships. You should never ever store foreign keys in a string like that.
+
+Checking Friendship. To check if any two users are friends use this query. Remember that always the user_one_id must be smaller than the user_two_id. If the result returns a row, then the users are friends. SELECT * FROM `relationship` WHERE `user_one_id` = 1 AND `user_two_id` = 2 AND `status` = 1 Friends List. Retrieve all the users’ friends.
+
+insert into friendship (user, friend) values (2,1); Then, a friendship can be found this way: select f1.* from friendship f1 inner join friendship f2 on f1.user = f2.friend and f1.friend = f2.user; You can make a view with this last query, it will help you query-ing for users’ friends, or even friends of friends.
+
+Now, database programs take that work off your hands and offer a more complex, more searchable way to store important names, addresses, and project details. Database software is the bread-and-butter of your business. Customer data management can help you sort, search, and select clients that you have had previous contact with.
+
+Choosing the best Database in a System Design Interview — CodeKarle. Now, scale, structure, and query pattern.Right. If the information is structured and can be represented as a table, and if we need our transactions to be atomic, consistent, isolated, and durable (ACID), we go with a relational database.
+
+Use this method to transfer Facebook friends to your client database, along with email addresses, telephone numbers and physical addresses. Often times real estate agents are connected with many people on Facebook that are not in their customer relationship management (CRM) systems as a part of their client databases.
+
+If the “Friendship Request” is not responded to by both parties in 14 days then it “expires” and while the request may persist in the database, it is no longer valid.
+
+Data relations between users, friends and updates tables for friend feed results. The following SQL statement users table object as U, updates table object as D and friends table object as F. Here $user_id reference to user session value and $friend_id is reference to friend user row id value.
+
+Store friends list in database
+The database continues to expand as THNOC staff discover and digitize additional advertisements. The Lost Friends project originated as a companion to THNOC’s 2015 exhibition Purchased Lives and was inspired by Heather Andrea Williams’s 2012 book Help Me to Find My People: The African American Search for Family Lost in Slavery .
+
+/* We've created a database for a friend networking site, with a table storing data on each person, a table on each person's hobbies, and a table of friend connections between the people.
+
+Friend request system using PHP and MySQL
+A basic friendship system in PHP and MySQL consists of: A user and relationship database table. PHP library to manage the relationships. Lastly, implementation on the pages itself.
+
+I was totally wrong, you don't need to create any extra flag, just store the user_id-which you retrieve from the database when the user logs in - store it in the session then when he/she clicks on the add friend button check the $_SESSION['user_id'] with the id of the other user before completing the friendship function, if they're both the same, means it's the same person, otherwise add friends.
+
+Social Network Friends Relationship System Using PHP and MySQL - Part 1 26 March 2015 Reading Time: When building a social network, it is important to think about the relationship design between the users on the site.
+
+PHP Simple Friend System with Source is a PHP project that can let you send a friend request to other users. The program was created using PHP OOP, MySQLi, and Javascript. The program is very straightforward, the user can access the system when he/she signup an account.
+
+Learn how to create friend request system in PHP and Javascript. This friend request script contains sending a friend request, accepting or rejecting friend request and viewing or seeing your friends. Visit the link below to follow the tutorial on how to create a twitter, youtube, Gmail and much more.
+
+Friends table SQL
+Assuming all your friends are also in the user table you will need a friends table which defines a simple one-to-many relationship – linking the users table back to itself.
+
+A relationship from the user to itself wouldn't work because you could only have one friend for each user. That is why you need to create the friends table, which is a type of table that is sometimes called a "junction" table. Your diagram (which by the way is a relational diagram, not a SQL diagram) looks correct.
+
+And assuming that you are representing a "friendship" between users via a record in your friends table, you would create a friendship like so: insert into friends (iduser, friendid) values (1, 2); This would establish a relationship between user id 1 (amy) and user id 2 (bill).
+
+It's not possible to retrieve data from RDBMS for user friends data for data which cross more than half a billion at a constant time so Facebook implemented this using a hash database (no SQL) and they opensourced the database called Cassandra.
+
+Friend Request. Inserting a new Friend request. Friend request sent by user 1 to user 2. Once a record is inserted in the relationship table, a friend request or a relationship has been established between the two users. You can use the status and action_user_id to display the appropriate options and to block the user.
+
+
+

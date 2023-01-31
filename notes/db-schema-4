@@ -1,0 +1,92 @@
+The correct data model often depends on the use-cases that you want to support. Looking at your model there are several questions that spring to mind, which you might want to consider.
+
+There's a 1:1 mapping between user and profile, what are you trying to achieve by spreading the information across two tables?
+Why is email in the user table, rather than the profile table?
+
+People often have more than one mobile number, do you need to support different concurrent values (i.e. home/work mobile)? Do you need to support history (current mobile, previous mobile)?
+
+Your gateway_deposit tables have almost the same information in them. The difference is really requestId vs referenceCode, which arguably represent the same information. Do these need to be separate tables, or would it be better for them to be a single table with a discriminator column for the type of gateway?
+
+transactions has a type, which is constrained to WITHDRAWAL or DEPOSIT, do you need a column to differentiate between the type of gateway used? If not, how are you anticipating fetching back transactions, only from particular gateways, or all transactions?
+
+All deposit/withdrawal transactions seem like they're going to have a value, however there's no value field in the transactions table. Is this part of the gateway tables, or are you not interested in this? Is there a need for non-value transaction types in the future?
+
+Overlapping somewhat with the other answers:
+
+status should be constrained, either ideally as an enum, or if that's not possible, then a check constraint
+
+mobileNumber having a max length of 255 is arbitrary and doesn't make much sense. If you do want to constrain the length, a shorter constraint would be appropriate.
+
+Why no action? This defeats the purpose of referential integrity.
+
+Why is transaction.type nullable? It should probably always have a valid value, though it's difficult to say without hearing about the purpose of the table.
+
+Since the only difference between the two gateway deposit tables is the reference code versus request ID, you can factor out common columns to a different table. If they're guaranteed to co-exist with transaction at the same cardinality, you can move them to transaction. Otherwise you can create a new table.
+
+
+3
+
+
+To me it's not clear why user and profile are two different tables. Seems to me that you could combine all fields into one single user table. For contact addresses though, you can have a separate table with a one to many relationship but your model doesn't have that and maybe you don't need that.
+
+In table user the status column could probably be an ENUM like in type in transaction table, with a default value of 'inactive' or something like that, until the user is enabled for example by confirming the E-mail address. In table transaction, status could also be an ENUM.
+
+Will users be able to log in to some website ? I don't see any password column.
+
+
+Maybe something is missing in your schema: a table of orders. The transaction should relate to the delivery of specific products/services, that should be itemized somewhere. And probably invoices too.
+
+Regarding gateway_1_deposit and gateway_2_deposit: there is almost no difference. So you just need one common table, with an additional field to store which of the two gateways was used. referenceCode and requestId refer to the same thing.
+
+Thus, transaction, gateway_1_deposit and gateway_2_deposit can be merged into one single table named 'transaction'.
+
+Typo in gateway_1_deposit and gateway_2_deposit: attribrute2
+
+I recommend to avoid mixed case in object names, but instead use lowercase with underscore to separate keywords along these guidelines.
+
+Data length choice is somewhat unusual: why VARCHAR(45) and not just 50 which is more common and a rounded value ? I guess 50 characters should be enough except for edge cases (my current job E-mail already has 33 characters and some colleagues have longer or multiple names).
+
+On the other hand VARCHAR(255) for name, surname or mobile number etc is overkill.
+
+In table user and transaction, id and userId can be declared as INT UNSIGNED.
+
+By default, indexes in Mysql are visible, so it's not necessary to specify that.
+
+
+
+As far as I know, Facebook uses a directed graph-like structure to denote everything on their website.
+So, a user or a page or a group would be a node and every attribute (likes, page views, mutual friends, ANYTHING) is an edge connecting two nodes.
+So, if we have a a photo (a node), and we have a user (another node), then a like would be an edge labelled LIKE_n or whatever.
+Then we can count the number of likes on A by checking incoming edges with label LIKE_n to the node A.
+
+The way the graph is represented in memory depends on the database used, etc. But the basic structure of data storage remains the same.
+
+
+If I were to guess, they most likely have a 3 tables:
+
+Post 
+== 
+Id * primary key 
+<Other content> 
+ 
+User 
+== 
+Id * primary key 
+<Other content> 
+ 
+Like 
+== 
+PostId *FK to post table 
+UserId  *FK to user table 
+<Other content (Like, sad, angry, wow, haha)> 
+
+
+
+But that doesn't really answer the question about how we establish friendships, does it? Well, let's get into that.
+
+First, we know that a person can have many friends, and that many of those friends may be friends with each other. We also might want to keep track of when they became friends, right? Although it might initially make sense to have a table where we store all of Mary's friends, what we really need is a way to store ALL friendships in a single table. In this case, a Many to Many relationship is what we're looking for. That might look like this:
+
+
+  
+
+

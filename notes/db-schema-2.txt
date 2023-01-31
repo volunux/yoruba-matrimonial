@@ -1,0 +1,213 @@
+Users Table
+User table contains all the users registration details.
+CREATE TABLE `users` (
+`user_id` INT(11) NOT NULL AUTO_INCREMENT ,
+`username` VARCHAR(45) ,
+`password` VARCHAR(100) ,
+`email` VARCHAR(45) ,
+`friend_count` INT(11) ,
+`profile_pic` VARCHAR(150),
+PRIMARY KEY (`user_id`));
+
+
+
+
+Updates Table
+This table contains user status updates data. Here user_id_fk  is the FOREIGN KEY to REFERENCES users.user_id
+CREATE TABLE `updates` (
+`update_id` INT(11) AUTO_INCREMENT ,
+`update` VARCHAR(45),
+`user_id_fk` VARCHAR(45),
+`created` INT(11) ,
+`ip` VARCHAR(45),
+PRIMARY KEY (`update_id`),
+FOREIGN KEY (user_id_fk) REFERENCES users(user_id));
+
+
+
+
+
+Friends Table
+This table contains user friends relation data. Here friend_one and friend_two are the FOREIGN KEYs to REFERENCES users.user_id
+CREATE TABLE `friends` (
+`friend_one` INT(11) ,
+`friend_two` INT(11) ,
+`status` ENUM('0','1','2') DEFAULT '0',
+PRIMARY KEY (`friend_one`,`friend_two`),
+FOREIGN KEY (friend_one) REFERENCES users(user_id),
+FOREIGN KEY (friend_two) REFERENCES users(user_id));
+
+Here status 0, 1 and 2 values references to Pending Friend Request, Confirm Friend Request and You.
+
+
+
+
+User Registration
+This statement is required for user registration, here status 2 represents to you. This helps while retrieving friend updates along with your updates.
+INSERT INTO friends
+(friend_one,friend_two,status)
+VALUES
+('$user_id','$user_id','2');
+
+Add Friend
+Use the following insert statement for adding a friend.
+INSERT INTO friends
+(friend_one,friend_two)
+VALUES
+('$user_id','$friend_id');
+
+
+
+
+
+Confirm Friend Request
+Here confirming the friend request, updating the status 0 to 1
+UPDATE friends
+SET status="1"
+WHERE
+(friend_one="$user_id" OR friend_two="$user_id")
+AND
+(friend_one="$friend_id" OR friend_two="$friend_id")
+
+
+
+
+
+Checking Friend
+Here friend_one represents the friend request owner.
+SELECT 'friend_one','friend_two','status' FROM friends
+WHERE
+(friend_one="$user_id" OR friend_two="$user_id")
+AND
+(friend_one="$friend_id" OR friend_two="$friend_id")
+
+
+
+
+
+
+The basic building block or the basic element in Facebook is an account. When a user signs up, the user is asked for the following information:
+
+First Name
+Last Name
+Email Address
+Password
+Birthdate
+Gender
+Given these information, we can now create the first table in our database design, which we will call the Account table:
+
+CREATE TABLE [dbo].[Account](
+    [AccountID]  INT IDENTITY(1,1) NOT NULL,
+    [Email]      VARCHAR(100) NOT NULL,
+    [FirstName]  VARCHAR(50) NOT NULL,
+    [LastName]   VARCHAR(50) NOT NULL,
+    [Password]   VARBINARY(100) NOT NULL,
+    [Birthdate]  DATE NOT NULL,
+    [Gender]     CHAR(1) NOT NULL,
+    CONSTRAINT [PK_Account] PRIMARY KEY CLUSTERED ( [AccountID] ASC )
+)
+GO
+
+
+
+
+
+Other user information such as relationship status, website, anniversary, religion and political views, can be added to this table later but the basic requirements for now are just these columns.
+
+Once an account has been created, the next thing a user usually does is to add new friends by doing a friend request.  The friend request event can be stored in a table, which we will appropriately call FriendRequest.
+
+CREATE TABLE [dbo].[FriendRequest](
+    [FriendRequestID]     INT IDENTITY(1,1) NOT NULL,
+    [AccountID1]          INT NOT NULL REFERENCES [dbo].[Account] ( [AccountID] ),
+    [AccountID2]          INT NOT NULL REFERENCES [dbo].[Account] ( [AccountID] ),
+    [RequestDate]         DATETIME NOT NULL,
+    CONSTRAINT [PK_FriendRequest] PRIMARY KEY CLUSTERED ( [FriendRequestID] ASC )
+)
+GO
+
+
+
+
+
+If a friend request has been declined, that record will be removed from this table.  However, if the friend request has been accepted then that friend can now be associated with the user.   This account association will be maintained in another table, appropriately called the Friend table.
+
+CREATE TABLE [dbo].[Friend](
+    [FriendID]   [int] IDENTITY(1,1) NOT NULL,
+    [AccountID1] [int] NOT NULL REFERENCES [dbo].[Account] ( [AccountID] ),
+    [AccountID2] [int] NOT NULL REFERENCES [dbo].[Account] ( [AccountID] ),
+    PRIMARY KEY CLUSTERED ( [FriendID] ASC )
+)
+GO
+
+
+
+
+
+
+The friend request record will be deleted from the [dbo].[FriendRequest] table and two records will be created in the [dbo].[Friend] table. The first record will be the association between the user (as AccountID1) and the friend (as AccountID2) and the second record will be the opposite which is the relationship between the friend (as AccountID1) and the user (as AccountID2).
+
+Although the [dbo].[FriendRequest] table can be merged together with the [dbo].[Friend] table and just add another column to signify the acceptance of the request, a separate table is used instead to separate the friends from friend requests to minimize the number of records being stored and queried when getting the list of friends for a particular user and thus making the query faster.
+
+To get the list of friends for a particular user account, the following query can be used:
+
+SELECT B.[Email], B.[FirstName], B.[LastName]
+FROM [dbo].[Friend] A INNER JOIN [dbo].[Account] B
+                              ON A.[AccountID1] = @AccountID AND
+                                 A.[AccountID2] = B.[AccountID]
+To get a list of common friends between two user accounts, the following query can be used:
+
+SELECT C.[Email], C.[FirstName], C.[LastName]
+FROM [dbo].[Friend] A INNER JOIN [dbo].[Friend] B
+                              ON A.[AccountID1] = @AccountID1 AND 
+                                 B.[AccountID1] = @AccountID2 AND
+                                 A.[AccountID2] = B.[AccountID2]
+                      INNER JOIN [dbo].[Account] C
+                              ON A.[AccountID2] = C.[AccountID]
+To make these queries execute faster, an indexes can be created on the [AccountID1] and [AccountID2] columns:
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Friend1] ON [dbo].[Friend] (
+	[AccountID1] ASC,
+	[AccountID2] ASC
+)
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Friend2] ON [dbo].[Friend] (
+	[AccountID2] ASC,
+	[AccountID1] ASC
+)
+GO
+
+
+
+
+
+-2
+
+
+Yes. I think that You can use enum in code and bind eventuatly to it.
+
+null - unknow ; 0 - male ; 1 - female;
+
+or you can use bool type to define this
+
+null - unknow; true - male; false - female
+
+
+
+
+0
+
+
+Very easy:
+Just use enum:
+
+CREATE TYPE gen AS ENUM ('f', 'm');
+
+CREATE TABLE lawyers_tb (
+  ID SERIAL PRIMARY KEY,
+  name VARCHAR,
+  gender gen
+);
+
+INSERT INTO lawyers_tb (name, gender)
+  VALUES ('Jose Luis Gonzales', 'm');

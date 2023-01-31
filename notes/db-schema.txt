@@ -1,0 +1,369 @@
+user
+----------
+id
+name
+
+message
+--------------
+id
+from_id
+to_id
+message_id --> refer to this table itself, to make me know which message is the topic
+subject
+content
+time
+status --> inbox, outbox, archive
+read --> read, unread
+
+
+
+
+
+user
+----------
+id
+name
+
+message_header
+--------------
+id
+from_id
+to_id
+subject
+status --> inbox, outbox, archive
+time
+
+message
+--------
+id
+message_header_id
+content
+time
+read --> read, unread
+author_id
+
+
+
+First collect your requirements then choose your db
+
+Oracle or sqlserver
+
+Then create master table and create sub table like list of users list as master and license expiration table and groom table bride list table.
+
+Then access these data by creating stored procedures or else queries.
+
+
+
+
+The Emergence of Matrimonial Mobile Apps
+
+It was in May 2015 that Frost & Sullivan, a market research and analysis firm, reported that India, three of the top online matchmakers in the country, performed more than five million marriages in the past decade. Actually, the business of online matrimony app is growing so fast that it is estimated to be 0.26 billion by 2022.
+
+
+These statistics clearly show the popularity of matrimonial websites and are certainly an incentive to grow your business. Want to enjoy the trends with the best wedding app designs?
+
+What are the benefits of getting a matrimonial app developed for your matchmaking business?
+
+Apps provide a better source of advertising and marketing
+A feature-rich matrimonial mobile app enables privacy and security of profiles.
+Having one app will attract more viewers as here they will be able to browse multiple profiles at once.
+With the help of these apps, you can make it easy and convenient for your customers to find partners within their caste and community.
+Technology Stack
+
+Mobile - Android, iOS
+Push Notifications - Twilio,
+SMS, Voice, and Phone Verification - Nexmo, Twilio
+Backend - PHP, Javascript, MySQL
+Payments - Braintree & PayPal, Stripe, NetBanking, Cards
+Database - MongoDB, Hbase, Cassandra, Postgress, MailChimp Integration
+Cloud Environment - AWS, Google, Azure
+Realtime Analytics - Hadoop, Spark, BigData, Apache Flink, Cisco, IBM
+Prominent Matrimonial Management Software in the Market
+
+Shaadi
+Bharat Matrimony
+Zindagi matrimony app
+WayToNikah
+Chavara Matrimony
+Love Vivah Matrimonial App
+Features of a Matrimonial app and website:
+
+User Panel
+
+· Login/Register
+
+· Ask the user for horoscope and pictures
+
+· Profile verification
+
+· Real-time chat
+
+· Create the desired profile
+
+· Membership packages
+
+· Add horoscope
+
+· Make payment
+
+· Upload pictures
+
+· Customer support
+
+· Send interest requests
+
+· View success stories
+
+· Add users in the favorite list
+
+· Add your success story
+
+· View profile of the selected user
+
+· Privacy and visibility settings
+
+· Check astrology compatibility
+
+· Manage profile
+
+· Share, block and report user profile
+
+· Notifications/Alerts
+
+· Accept interest requests
+
+· Manage alerts
+
+Admin Panel
+
+· Login
+
+· Manage promotions
+
+· Dashboard
+
+· CRM integration
+
+· User profile verification
+
+· Payment gateway integration
+
+· Manage users
+
+· Third party API’s integration
+
+· Manage invites
+
+· Manage profile
+
+· Manage success stories and user requests
+
+· Reporting and analytics
+
+· Manage membership packages
+
+· Notification/Alerts
+
+· Manage promotions
+
+· Payment gateway integration
+
+· CRM integration
+
+· Third party API’s integration
+
+Advanced Features:
+
+Add pictures from the gallery
+GPS-enabled city search
+Matrimony messenger
+Multiple payment modes
+User privacy and blocking
+Social Sharing
+In-app calling
+Cost of developing a Matrimonial app and website like shaadi
+
+The cost of matrimonial website development and app is affected by numerous factors, but a simple feature app and web may cost you around $3000 to $8000. However, the cost may increase if you wish to implement more advanced features.
+
+
+
+
+In principle (at high level architecture), a matrimonial website is expected to have following feature sets:
+
+1> User Account Management Module (registration, login, logout, forgot password features et al…)
+
+2> User Profile Management Module (a CRUD on User Profiles)
+
+3> Profile Search / Profile Match / Reporting modules.
+
+As far as technology stack is concerned, I would recommend following:
+
+1> HTML5/Bootstrap 3.x.x/Javascript/jquery/AJAX on front end side.
+
+2> PHP / MySQL / Apache on the back end side.
+
+Important quality factor you need to keep in mind while design are as follows:
+
+1> Scalability / Performance - assuming your matrimonial website shall have a huge number of users and hence heavy traffic.
+
+2> Security - NO ONE shall appreciate if their personal data stored on the server is stolen / hacked / and subsequently mis-used. Therefore, the architect need to be really paranoid about application security.
+
+
+
+
+<---- Chat application db good or not? ---->
+
+
+----- Users collection -----
+
+-Username
+-Email
+-Password (hashed ofc)
+-Unique id (primary key)
+
+
+
+!!!! NOT SURE ABOUT BELOW !!!!
+
+----Chats----
+- Unique chat id (primary key)
+-[] userid
+- Type (groupchat or not?)
+- Name (groupchat name, or friends chat name)
+
+----Messages----
+- Chat id
+- Message (including files/images?)
+- senderid (compare if it is yours or not)
+
+
+
+
+9
+
+
+I would use a lookup table for the messages that would store who has the rights to view that message
+
+table->message                   |    table->messageUsers
+id->0, message->'hi', user_id->1      user_id->1, message_id->0
+                                      user_id->2, message_id->0
+That way if a user deletes their message they are actually just deleting their relationship to the message not the message itself. you just remove them from the messageUsers table. or set a active field to 1 or 0.
+
+
+
+if i delete lets say users 1 message. how will user 2 know the message is from user 1 and not from user 3 or 4 ? – 
+Harsha M V
+ Nov 12, 2011 at 17:10
+i updated the answer. So you would just store in the message table that user_id is the id of the user that created the message. for example if message->user_id = 1 and in messageUsers you delete user 1's ability to read that message, user 2 will still see the message and who created it. – 
+Tim Joyce
+ Nov 12, 2011 at 17:13 
+This is also assuming that you are creating a relational database... hope you are. – 
+Tim Joyce
+ Nov 12, 2011 at 17:17
+
+
+
+ 3
+
+
+At first I thought that when one person deleted it you could just turn either To or From to null but that would make you lose who sent the message or to whom it was addressed.
+
+You should just add a field deleted_by which will contain the id of the person who deleted it or will be null. So when selecting records from the inbox you have something like:
+
+Select * From Messages where to_id = MyID and deleted_by <> MyID
+
+when you delete the message you check if the deleted_by is null, if it is you update the deleted_by field with MyID, if it is not (means that the other party deleted it as well) you delete the record.
+
+If you want to have the same functionality for threads instead of messages (i.e. manage the conversation and not one message at a time) you should have another table (MessageThreads) in which you have the from_id, to_id fields, deleted_by along with a thread_id field. in the Messages table you subsitute the from_id to_id and deleted_by with the thread_id.
+
+
+
+1
+
+
+There will be two tables. nodes node_user
+
+In nodes table,
+
+node_id
+title
+message
+timestamp
+In node_user table,
+
+node_user_id(PK)
+node_id
+parent_node_id(for threaded)
+from_id
+to_id
+timestamp
+read
+When user A send a message to user B, firstly store the message in nodes table. And then, add two records in node_user table. When user A delete the message, only delete the first record in node_user table. When user B delete the message, you can delete records from both nodes and node_user table.
+
+Threaded Message,
+
+Use parent_node_id
+Share
+Follow
+edited Nov 12, 2011 at 18:08
+answered Nov 12, 2011 at 17:02
+Thein Hla Maw's user avatar
+Thein Hla Maw
+68711 gold badge99 silver badges2828 bronze badges
+why do i need to store the message three times ? – 
+Harsha M V
+ Nov 12, 2011 at 17:45
+sorry. I forgot to delete the message column in node_user table. I will edit. You don't need to store message three times. Just one time in node table only. Use node_user table to store sender and recipient. It will also work if you add CC and BCC features later. – 
+Thein Hla Maw
+ Nov 12, 2011 at 17:57
+i have modified my question... to clearly state my needs. guess calling an inbox was not appropriate. Thanks a lot – 
+Harsha M V
+ Nov 12, 2011 at 18:04
+1
+corrected the wrong table name "only delete the first record in node_user table." to remove the conversation from User A to User B. User B still have access the conversation – 
+Thein Hla Maw
+ Nov 12, 2011 at 18:11
+i guess even timestamp can be omitted and also we will need an author Id for the first table – 
+Harsha M V
+ Nov 12, 2011 at 19:13
+
+
+
+ https://stackoverflow.com/questions/17341686/database-structure-for-web-messaging-system
+
+ https://vertabelo.com/blog/database-model-for-a-messaging-system/
+ https://stackoverflow.com/questions/44535831/firebase-realtime-database-structure-in-chat-app
+ https://stackoverflow.com/questions/4256704/database-schema-for-messaging-to-multiple-users
+ https://stackoverflow.com/questions/1890481/how-should-i-setup-my-database-schema-for-a-messaging-system-complete-with-attach
+ https://stackoverflow.com/questions/6033062/messaging-system-database-schema
+ https://stackoverflow.com/questions/7569932/database-schema-of-messaging-application
+ https://www.cometchat.com/blog/building-your-own-dating-app
+ https://www.mongodb.com/community/forums/t/data-modeling-for-tinder-app/105194 
+ https://github.com/zelaznik/cosmo_connect
+
+ https://techtakshila.com/system-design-interview/chapter-5/
+ https://medium.com/system-design-concepts/dating-application-system-design-aae411412267
+ https://www.daniweb.com/programming/databases/threads/146394/database-design-for-dating-site
+ https://stackoverflow.com/questions/41986012/tinder-like-application-mongodb-database-schema
+ https://stackoverflow.com/questions/38685221/location-based-horizontal-scalable-dating-app-database-model  
+ https://stackoverflow.com/questions/6480942/database-design-dating-site-like-application
+ https://stackoverflow.com/questions/55103477/efficient-mysql-database-design-for-a-tinder-like-app
+ https://stackoverflow.com/questions/4459466/how-to-design-the-user-table-for-an-online-dating-site
+ https://laracasts.com/discuss/channels/eloquent/database-design-for-dating-site
+ https://vertabelo.com/blog/a-dating-app-data-model/  
+ https://stackoverflow.com/questions/46484989/database-schema-for-chat-private-and-group
+
+
+
+ Interesting question, I'd recommend MongoDb for this requirement.
+
+Why my recommendation?
+
+If you implement this in SQL, for every attribute or personality trait a person adds to his/her profile you'll have to create a new column in this database thus consuming space
+For NoSQL, a simple entry in the JSON would do without the requirement for any new column or space consuming stuff
+You wouldn't require Table joins for this application so that removes the usage of the only edge that SQL has in this use case
+If I were to make this a commercial success I'd also add a layer of a caché database like Redis to add more boost
+Hope this helps! Please comment to share your point of view, would love to hear any other perspective on this!
+
+Thanks!
+
